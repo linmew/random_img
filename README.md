@@ -24,7 +24,7 @@ TIPS:**本项目仅用于学习和交流，请于下载后的24小时内删除�
 
 ## 丨简介
 
-用于小派蒙机器人输出随机图片（类别有原神、二次元、必应等）、情话，基于惜月大佬的[随机图](https://github.com/CMHopeSunshine/LittlePaimon/tree/nonebot2/Paimon_Plugins)代码调整的。
+用于小派蒙机器人输出随机图片（类别有原神、二次元、必应等）、情话，基于惜月大佬的 <a href="https://github.com/CMHopeSunshine/LittlePaimon/tree/nonebot2/Paimon_Plugins/random_img.py" target="_blank">随机图</a> 代码调整的。
 
 ## | 功能示例
 1.示例：来点必应
@@ -86,6 +86,6 @@ tuwei_word_daily_limit=10
 
 ## 丨💸鸣谢
 
-* [LittlePaimon](https://github.com/CMHopeSunshine/LittlePaimon)派蒙
-* [随机图](https://github.com/CMHopeSunshine/LittlePaimon/tree/nonebot2/Paimon_Plugins)
-* [LittlePaimon-plugin-Captcha](https://github.com/forchannot/LittlePaimon-plugin-Captcha/blob/main/README.md) ~~对的，连readme都是借鉴的~~
+* <a href="https://github.com/CMHopeSunshine/LittlePaimon" target="_blank">LittlePaimon</a> 派蒙
+* <a href="https://github.com/CMHopeSunshine/LittlePaimon/tree/nonebot2/Paimon_Plugins/random_img.py" target="_blank">随机图</a>
+* <a href="https://github.com/forchannot/LittlePaimon-plugin-Captcha/" target="_blank">LittlePaimon-plugin-Captcha</a> ~~对的，连readme都是借鉴的~~
