@@ -59,7 +59,7 @@ git clone https://github.com/linmew/random_img.git /Paimon Directory/src/plugins
 注：请将``/Paimon Directory/src/plugins/random_img``替换为你的派蒙实际目录，当然后面的文件名你可以随意调整，或者你可以在派蒙的目录``/src/plugins/``下，直接运行下面的命令：
 
 ```powershell
-git clone https://github.com/linmew/random_img.git /Paimon random_img
+git clone https://github.com/linmew/random_img.git random_img
 ```
 
 2.下载zip压缩包，在派蒙的目录``/src/plugins/``下解压zip文件即可。
