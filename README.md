@@ -79,9 +79,13 @@ pip install beautifulsoup4 xml openai
 
 
 
-**如果使用了chatgpt的函数，请一定要装openai库，当然，api请求是需要魔法的。不要问，不懂删对应代码即可~~觉得有意思就自己按照openai的API文档尝试下写的，如果需要chatgpt功能，我想nb商店有更多更好更全的插件，自行搜索安装哦~~。[OpenAI API地址](https://platform.openai.com/account/api-keys)**
-**用的第三方api接口请求，如果第三方的api失效了，可以自己动手更改，或者等修复（~~不一定很快就是了~~）。安装完后记得重启下派蒙。**
-**~~有空可能会给代码补上注释的~~**
+**1.如果使用了chatgpt的函数，请一定要装openai库，当然，api请求是需要魔法的。不要问，不懂删对应代码即可。~~觉得有意思就自己按照openai的API文档尝试下写的，如果需要chatgpt功能，我想nb商店有更多更好更全的插件，自行搜索安装哦，当然你也可以自己试试，挺有意思的~~。**
+
+**[OpenAI API地址](https://platform.openai.com/account/api-keys)**
+
+**2.用的第三方api接口请求，如果第三方的api失效了，可以自己动手更改，或者等修复（~~不一定很快就是了~~）。安装完后记得重启下派蒙。**
+
+**3.~~有空可能会给代码补上注释的~~**
 
 ## | ⚙️配置文件
 
