@@ -67,7 +67,7 @@ git clone https://github.com/linmew/random_img.git /Paimon Directory/src/plugins
 git clone https://github.com/linmew/random_img.git random_img
 ```
 
-2.下载zip压缩包，在派蒙的目录``/src/plugins/``下解压zip文件即可。
+2.下载zip压缩包，在派蒙的目录(就是bot.py所在层级目录)``/src/plugins/``下解压zip文件即可。
 
 #### |❗注意事项：
 
