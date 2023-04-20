@@ -206,9 +206,15 @@ async def bing_img_handler(bot: Bot, event: MessageEvent):
 
 # chatgpt
 openai.api_key = str(getattr(config, "openai_api_key", ""))
-os.environ["HTTP_PROXY"] = "http://127.0.0.1:10809"
-os.environ["HTTPS_PROXY"] = "http://127.0.0.1:10809"
 async def fetch_answer(question: str) -> str:
+    proxy = str(getattr(config, "openai_api_proxy", ""))
+    print(f'proxy:{proxy}')
+    if proxy:
+        openai.proxy = {
+            'http': proxy,
+            'https': proxy
+        }
+
     loop = asyncio.get_event_loop()
     response = await loop.run_in_executor(None, lambda: openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
