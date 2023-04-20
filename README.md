@@ -69,7 +69,7 @@ git clone https://github.com/linmew/random_img.git random_img
 你可能需要安装下列的库，使用命令：
 
 ```powershell
-pip install beautifulsoup4 xml
+pip install beautifulsoup4 xml openai
 ```
 
 
@@ -87,6 +87,9 @@ pip install beautifulsoup4 xml
 ```powershell
 # 情话次数
 tuwei_word_daily_limit=10
+# chatGPT api
+openai_api_key=sk-xxx #填入自己的openAI api
+# api地址：https://platform.openai.com/account/api-keys
 ```
 
 注：``.env.{ENVIRONMENT}``中的`{ENVIRONMENT}`的值取决于你的派蒙目录下的文件`.env`配置，如果文件里`ENVIRONMENT=prod`，则`.env.{ENVIRONMENT}`指的是文件`.env.prod`。
