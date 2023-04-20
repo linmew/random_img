@@ -3,6 +3,8 @@ import requests
 import httpx
 import asyncio
 import os
+import openai
+import re
 from bs4 import BeautifulSoup
 from datetime import date
 from xml.etree import ElementTree
@@ -39,6 +41,8 @@ bing_img = on_command('来点必应壁纸', aliases={'来点必应图', '来点�
 beautiful_img = on_command('来点随机图', aliases={'来点随机图'}, priority=13, block=True)
 tuwei_word = on_command('来点情话', aliases={'来点情话','说点情话'}, priority=13, block=True)
 coser_img = on_command('来点coser', aliases={'来点coser', '来点cos'}, priority=13, block=True)
+# 新功能
+paimon_knowledge = on_command('派蒙你知道', aliases={'派蒙你知道'}, priority=13, block=True)
 
 # 读取.env.{ENVIRONMENT} 文件中的配置
 config = nonebot.get_driver().config
@@ -199,3 +203,39 @@ async def bing_img_handler(bot: Bot, event: MessageEvent):
         await bing_img.finish(MessageSegment.text(img_alt) + MessageSegment.image(file=img_src))
     else:
         await bing_img.finish("呜呜呜，派蒙已经很努力了，但是没有找到你要的图片，可能是要找的网站不给派蒙图片，果面呐噻~下次一定一定会更努力的 (´；ω；`)")
+
+# chatgpt
+openai.api_key = str(getattr(config, "openai_api_key", ""))
+os.environ["HTTP_PROXY"] = "http://127.0.0.1:10809"
+os.environ["HTTPS_PROXY"] = "http://127.0.0.1:10809"
+async def fetch_answer(question: str) -> str:
+    loop = asyncio.get_event_loop()
+    response = await loop.run_in_executor(None, lambda: openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "user", "content": f"你知道{question}？"}
+        ],
+        temperature=0.5,
+        max_tokens=2048,
+        top_p=1,
+        n=1
+    ))
+    return response.choices[0].message["content"].strip()
+
+@paimon_knowledge.handle()
+async def paimon_knowledge_handler(bot: Bot, event: MessageEvent):
+    message_text = str(event.message).strip()
+    question_pattern = re.compile(r"派蒙你知道\s*\?*？*(.*)")
+    match = question_pattern.match(message_text)
+
+    if match:
+        question = match.group(1).strip()
+        if not question:
+            await paimon_knowledge.finish("你想问派蒙什么呢？")
+        else:
+            # 创建一个非阻塞任务，以便在等待 API 响应时继续执行其他任务
+            fetch_answer_task = asyncio.create_task(fetch_answer(question))
+            answer = await fetch_answer_task
+            await paimon_knowledge.finish(answer)
+    else:
+        await paimon_knowledge.finish("派蒙不知道哦！")
