@@ -30,6 +30,10 @@ TIPS:**本项目仅用于学习和交流，请于下载后的24小时内删除�
 1.示例：来点必应
 
 ​	说明：输出一张必应图
+  <details>
+    <summary>折叠效果图</summary>
+    <img src="https://user-images.githubusercontent.com/43131361/233527991-b4f071f4-0153-40fe-917d-f9a04189269b.png" />
+  </details>
 
 2.示例：来点二次元
 
@@ -42,18 +46,25 @@ TIPS:**本项目仅用于学习和交流，请于下载后的24小时内删除�
 4.示例：来点情话
 
 ​	说明：随机输出一句情话
+  <details>
+    <summary>折叠效果图</summary>
+    <img src="https://user-images.githubusercontent.com/43131361/233527714-13a85838-58fc-4a16-89fd-22d6bbaedeb7.png" />
+  </details>
 
 5.示例：来点coser
 
 ​	说明：随机输出输出一张coser图
-
+  <details>
+    <summary>折叠效果图</summary>
+    <img src="https://user-images.githubusercontent.com/43131361/233527490-e979b6c2-cd2e-496c-b433-585219d5264c.png" />
+  </details>
 6.示例：派蒙帮忙问问xx
 
 ​	说明：派蒙帮忙问问1+1=多少
-<details>
-  <summary>折叠效果图</summary>
-  ![image](https://user-images.githubusercontent.com/43131361/233526559-bcfb1743-33f3-49ff-a033-f80718268f56.png)
-</details>
+  <details>
+    <summary>折叠效果图</summary>
+    <img src="https://user-images.githubusercontent.com/43131361/233526559-bcfb1743-33f3-49ff-a033-f80718268f56.png" />
+  </details>
 
 
 ## | 安装方法和注意事项
