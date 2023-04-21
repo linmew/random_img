@@ -118,6 +118,8 @@ openai_api_key=sk-xxx
 # API Key地址：https://platform.openai.com/account/api-keys
 # chatGPT proxy代理
 openai_api_proxy="http://proxy.example"
+# 禁止使用派蒙帮忙问问的用户列表
+ban_use_userid = 12341234,45674567
 ```
 
 注：``.env.{ENVIRONMENT}``中的`{ENVIRONMENT}`的值取决于你的派蒙目录下的文件`.env`配置，如果文件里`ENVIRONMENT=prod`，则`.env.{ENVIRONMENT}`指的是文件`.env.prod`。

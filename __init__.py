@@ -208,6 +208,12 @@ async def bing_img_handler(bot: Bot, event: MessageEvent):
 #chatgpt
 # 读取配置文件中的openai_api_key
 openai.api_key = str(getattr(config, "openai_api_key", ""))
+# 从配置文件中获取被禁止的用户ID
+ban_use_userid_str = str(getattr(config, "ban_use_userid", "")).strip()
+
+# 根据逗号分隔字符串，并去除每个元素的前后空格
+ban_use_userid = [user_id.strip() for user_id in ban_use_userid_str.split(",")] if ban_use_userid_str else []
+
 # 定义一个异步函数用于获取gpt-3.5-turbo模型回答问题的答案
 async def fetch_answer(question: str) -> str:
     # 读取配置文件中的openai_api_proxy代理
@@ -232,7 +238,9 @@ async def fetch_answer(question: str) -> str:
         max_tokens=2048,
         n=1
     ))
-    return response.choices[0].message["content"].strip()
+    answer = response.choices[0].message["content"].strip()
+    usage_info = response.usage
+    return answer, usage_info
 
 @paimon_knowledge.handle()
 async def paimon_knowledge_handler(bot: Bot, event: MessageEvent):
@@ -240,6 +248,11 @@ async def paimon_knowledge_handler(bot: Bot, event: MessageEvent):
     message_text = str(event.message).strip()
     question_pattern = re.compile(r"派蒙帮忙问问\s*\?*？*(.*)")
     match = question_pattern.match(message_text)
+    # 获取用户id
+    user_id = event.user_id
+    # 检查用户是否在禁止列表中
+    if str(user_id) in ban_use_userid:
+        await paimon_knowledge.finish("你被禁止使用派蒙帮忙问问功能。")
 
     if match:
         question = match.group(1).strip()
@@ -248,7 +261,10 @@ async def paimon_knowledge_handler(bot: Bot, event: MessageEvent):
         else:
             # 创建一个非阻塞任务，以便在等待 API 响应时继续执行其他任务
             fetch_answer_task = asyncio.create_task(fetch_answer(question))
-            answer = await fetch_answer_task
+            answer, usage_info = await fetch_answer_task
+            # 记录usage信息
+            print(f"使用信息:\nPrompt tokens: {usage_info['prompt_tokens']}\nCompletion tokens: {usage_info['completion_tokens']}\nTotal tokens: {usage_info['total_tokens']}")
+
             await paimon_knowledge.finish(answer)
     else:
         await paimon_knowledge.finish("派蒙不知道哦！")
