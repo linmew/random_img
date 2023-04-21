@@ -263,7 +263,7 @@ async def paimon_knowledge_handler(bot: Bot, event: MessageEvent):
             fetch_answer_task = asyncio.create_task(fetch_answer(question))
             answer, usage_info = await fetch_answer_task
             # 记录usage信息
-            logger.info(f"使用信息:\nPrompt tokens: {usage_info['prompt_tokens']}\nCompletion tokens: {usage_info['completion_tokens']}\nTotal tokens: {usage_info['total_tokens']}")
+            logger.info(f"ChatGpt使用信息 问题字符: {usage_info['prompt_tokens']} 回答字符: {usage_info['completion_tokens']} 总消耗: {usage_info['total_tokens']}")
 
             await paimon_knowledge.finish(answer)
     else:
