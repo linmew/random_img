@@ -47,9 +47,9 @@ TIPS:**本项目仅用于学习和交流，请于下载后的24小时内删除�
 
 ​	说明：随机输出输出一张coser图
 
-6.示例：派蒙你知道xx？
+6.示例：派蒙帮忙问问xx
 
-​	说明：派蒙你知道1+1=多少嘛？
+​	说明：派蒙帮忙问问1+1=多少
 
 
 ## | 安装方法和注意事项
@@ -98,9 +98,9 @@ pip install beautifulsoup4 xml openai
 ```powershell
 # 情话次数
 tuwei_word_daily_limit=10
-# chatGPT api
-openai_api_key=sk-xxx #填入自己的openAI api
-# api地址：https://platform.openai.com/account/api-keys
+# 填入自己的openai API Key
+openai_api_key=sk-xxx
+# API Key：https://platform.openai.com/account/api-keys
 # chatGPT proxy代理
 openai_api_proxy="http://proxy.example"
 ```

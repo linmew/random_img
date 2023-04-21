@@ -41,8 +41,7 @@ bing_img = on_command('来点必应壁纸', aliases={'来点必应图', '来点�
 beautiful_img = on_command('来点随机图', aliases={'来点随机图'}, priority=13, block=True)
 tuwei_word = on_command('来点情话', aliases={'来点情话','说点情话'}, priority=13, block=True)
 coser_img = on_command('来点coser', aliases={'来点coser', '来点cos'}, priority=13, block=True)
-# 新功能
-paimon_knowledge = on_command('派蒙你知道', aliases={'派蒙你知道'}, priority=13, block=True)
+paimon_knowledge = on_command('派蒙帮忙问问', aliases={'派蒙帮忙问问'}, priority=13, block=True)
 
 # 读取.env.{ENVIRONMENT} 文件中的配置
 config = nonebot.get_driver().config
@@ -137,6 +136,7 @@ async def beautiful_img_handler(event: MessageEvent):
     ]
     await beautiful_img.finish(MessageSegment.image(file=random.choice(urls)))
 #情话
+# 用于存储用户请求的字典
 user_requests = {}
 # 读取配置文件中的土味情话每日限制次数, 没有就默认为 10 次
 tuwei_word_daily_limit = int(getattr(config, "tuwei_word_daily_limit", 10))
@@ -146,32 +146,33 @@ async def tuwei_word_handler(event: MessageEvent):
     global user_requests
     user_id = event.user_id
     today = date.today()
-
+    # 检查用户是否已经请求过，如果没有或者请求不是今天的，则初始化计数
     if user_id not in user_requests or user_requests[user_id]['date'] != today:
         user_requests[user_id] = {'date': today, 'count': 0}
-
+    # 如果用户今天的请求次数已经达到限制，不再处理请求
     if user_requests[user_id]['count'] >= tuwei_word_daily_limit:
         print(f"用户 {user_id} 今日已经收到了 {tuwei_word_daily_limit} 次情话.")
         return
-
+    # 定义情话API的URL列表
     urls = [
         'https://api.uomg.com/api/rand.qinghua?format=text',
         #'https://api.vvhan.com/api/love'
     ]
-
+    # 从URL列表中随机选择一个URL
     chosen_url = random.choice(urls)
-
+    # 如果请求成功，发送情话给用户，并增加今日请求次数
     async with httpx.AsyncClient() as client:
         response = await client.get(chosen_url)
         
     if response.status_code == 200:
         user_requests[user_id]['count'] += 1
-        text = response.text + "\n\n"  # 添加换行符
+        # 添加换行符
+        text = response.text + "\n\n"
         text += f"--你今天已经收到了派蒙 {user_requests[user_id]['count']} / {tuwei_word_daily_limit}次情话咯~"  # 显示今天已请求的次数
         await tuwei_word.finish(text)
     else:
         await tuwei_word.finish("呜呜，派蒙还没想到，不过，派蒙会一直陪着你的~")
-#必应每日壁纸
+# 必应每日壁纸
 @bing_img.handle()
 @auto_withdraw(30)
 async def bing_img_handler(bot: Bot, event: MessageEvent):
@@ -204,40 +205,46 @@ async def bing_img_handler(bot: Bot, event: MessageEvent):
     else:
         await bing_img.finish("呜呜呜，派蒙已经很努力了，但是没有找到你要的图片，可能是要找的网站不给派蒙图片，果面呐噻~下次一定一定会更努力的 (´；ω；`)")
 
-# chatgpt
+#chatgpt
+# 读取配置文件中的openai_api_key
 openai.api_key = str(getattr(config, "openai_api_key", ""))
+# 定义一个异步函数用于获取gpt-3.5-turbo模型回答问题的答案
 async def fetch_answer(question: str) -> str:
+    # 读取配置文件中的openai_api_proxy代理
     proxy = str(getattr(config, "openai_api_proxy", ""))
-    print(f'proxy:{proxy}')
+    # 设置局部代理来使用openai的API的访问
     if proxy:
         openai.proxy = {
             'http': proxy,
             'https': proxy
         }
-
+    # 使用异步方式调用openai的API，在请求 API 的时候，Bot 不会被阻塞
     loop = asyncio.get_event_loop()
     response = await loop.run_in_executor(None, lambda: openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "user", "content": f"你知道{question}？"}
+            # role：角色，content：用户输入的内容
+            {"role": "user", "content": f"{question}"}
         ],
-        temperature=0.5,
+        # 精度，介于0和2之间。较高的值（如0.8）会使输出更随机，而较低的值（如0.2）则会使其输出更加集中和精准
+        temperature=0.3,
+        # 生成的回复的最大令牌数
         max_tokens=2048,
-        top_p=1,
         n=1
     ))
     return response.choices[0].message["content"].strip()
 
 @paimon_knowledge.handle()
 async def paimon_knowledge_handler(bot: Bot, event: MessageEvent):
+    # 获取用户输入的内容
     message_text = str(event.message).strip()
-    question_pattern = re.compile(r"派蒙你知道\s*\?*？*(.*)")
+    question_pattern = re.compile(r"派蒙帮忙问问\s*\?*？*(.*)")
     match = question_pattern.match(message_text)
 
     if match:
         question = match.group(1).strip()
         if not question:
-            await paimon_knowledge.finish("你想问派蒙什么呢？")
+            await paimon_knowledge.finish("你想让派蒙帮忙问问ChatGPT什么呢？")
         else:
             # 创建一个非阻塞任务，以便在等待 API 响应时继续执行其他任务
             fetch_answer_task = asyncio.create_task(fetch_answer(question))
