@@ -91,7 +91,7 @@ pip install beautifulsoup4 xml openai
 
 代码中提供了情话的次数限制，chatgpt的代理、api配置，如果需要调整，你可以：
 
-1.DIY
+1.DIY~~改代码~~
 
 2.在`.env.{ENVIRONMENT}`中添加下面配置：
 
@@ -100,7 +100,7 @@ pip install beautifulsoup4 xml openai
 tuwei_word_daily_limit=10
 # 填入自己的openai API Key
 openai_api_key=sk-xxx
-# API Key：https://platform.openai.com/account/api-keys
+# API Key地址：https://platform.openai.com/account/api-keys
 # chatGPT proxy代理
 openai_api_proxy="http://proxy.example"
 ```
