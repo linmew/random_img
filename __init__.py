@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from datetime import date
 from xml.etree import ElementTree
 import nonebot
-from nonebot import on_command, on_regex
+from nonebot import on_command, on_regex, logger
 from nonebot.adapters.onebot.v11 import Bot, MessageEvent, MessageSegment
 from nonebot.params import RegexGroup
 from nonebot.plugin import PluginMetadata
@@ -263,7 +263,7 @@ async def paimon_knowledge_handler(bot: Bot, event: MessageEvent):
             fetch_answer_task = asyncio.create_task(fetch_answer(question))
             answer, usage_info = await fetch_answer_task
             # 记录usage信息
-            print(f"使用信息:\nPrompt tokens: {usage_info['prompt_tokens']}\nCompletion tokens: {usage_info['completion_tokens']}\nTotal tokens: {usage_info['total_tokens']}")
+            logger.info(f"使用信息:\nPrompt tokens: {usage_info['prompt_tokens']}\nCompletion tokens: {usage_info['completion_tokens']}\nTotal tokens: {usage_info['total_tokens']}")
 
             await paimon_knowledge.finish(answer)
     else:
