@@ -50,6 +50,10 @@ TIPS:**本项目仅用于学习和交流，请于下载后的24小时内删除�
 6.示例：派蒙帮忙问问xx
 
 ​	说明：派蒙帮忙问问1+1=多少
+<details>
+  <summary>折叠效果图</summary>
+  ![image](https://user-images.githubusercontent.com/43131361/233526559-bcfb1743-33f3-49ff-a033-f80718268f56.png)
+</details>
 
 
 ## | 安装方法和注意事项
