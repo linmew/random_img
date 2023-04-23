@@ -249,13 +249,16 @@ async def paimon_knowledge_handler(bot: Bot, event: MessageEvent):
         if not question:
             await paimon_knowledge.finish("你想让派蒙帮忙问问ChatGPT什么呢？")
         else:
-            # 创建一个非阻塞任务，以便在等待 API 响应时继续执行其他任务
-            fetch_answer_task = asyncio.create_task(fetch_answer(question))
-            answer, usage_info = await fetch_answer_task
-            # 记录usage信息
-            logger.info(f"ChatGpt使用信息 问题字符: {usage_info['prompt_tokens']} 回答字符: {usage_info['completion_tokens']} 总消耗: {usage_info['total_tokens']}")
+            try:
+                # 创建一个非阻塞任务，以便在等待 API 响应时继续执行其他任务
+                fetch_answer_task = asyncio.create_task(fetch_answer(question))
+                answer, usage_info = await fetch_answer_task
+                # 记录usage信息
+                logger.info(f"ChatGpt使用信息 问题字符: {usage_info['prompt_tokens']} 回答字符: {usage_info['completion_tokens']} 总消耗: {usage_info['total_tokens']}")
 
-            await paimon_knowledge.finish(answer)
+                await paimon_knowledge.finish(answer)
+            except httpx.ReadTimeout:
+                await paimon_knowledge.finish("肯定是你这个问题难倒到它啦，超时了，请稍后再问问。")
     else:
         await paimon_knowledge.finish("派蒙不知道哦！")
 
