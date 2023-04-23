@@ -89,12 +89,12 @@ git clone https://github.com/linmew/random_img.git random_img
 你可能需要安装下列的库，使用命令：
 
 ```powershell
-pip install beautifulsoup4 xml openai
+pip install beautifulsoup4 xml
 ```
 
 
 
-**1.openAI的api请求是需要魔法的。不要问，不懂删对应代码即可。发现了一个其他的不需要代理的API，感兴趣的自行购买，在下面配置说明里。~~觉得有意思就自己按照openai的API文档尝试下写的，如果需要chatgpt功能，我想nb商店有更多更好更全的插件，自行搜索安装哦，当然你也可以自己试试，挺有意思的~~。**
+**1.如果使用的是openAI的api请求是需要魔法的。如果你不了解代理这方面的知识，可以使用其他的不需要代理的API，在下面配置说明里有购买地址，感兴趣的自行购买。~~觉得有意思就自己按照openai的API文档尝试下写的，如果需要chatgpt功能，我想nb商店有更多更好更全的插件，自行搜索安装。如果需要chatgpt功能，你可以删掉对应的代码或者自己改代码~~。**
 
 **[OpenAI API地址](https://platform.openai.com/account/api-keys)**
 
