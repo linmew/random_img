@@ -94,7 +94,7 @@ pip install beautifulsoup4 xml openai
 
 
 
-**1.如果使用了chatgpt的函数，请一定要装openai库，当然，api请求是需要魔法的。不要问，不懂删对应代码即可。~~觉得有意思就自己按照openai的API文档尝试下写的，如果需要chatgpt功能，我想nb商店有更多更好更全的插件，自行搜索安装哦，当然你也可以自己试试，挺有意思的~~。**
+**1.openAI的api请求是需要魔法的。不要问，不懂删对应代码即可。发现了一个其他的不需要代理的API，感兴趣的自行购买，在下面配置说明里。~~觉得有意思就自己按照openai的API文档尝试下写的，如果需要chatgpt功能，我想nb商店有更多更好更全的插件，自行搜索安装哦，当然你也可以自己试试，挺有意思的~~。**
 
 **[OpenAI API地址](https://platform.openai.com/account/api-keys)**
 
@@ -114,12 +114,16 @@ pip install beautifulsoup4 xml openai
 # 情话次数
 tuwei_word_daily_limit=10
 # 填入自己的openai API Key
-openai_api_key=sk-xxx
+openai_api_key="sk-xxx,sk-xxx"
 # API Key地址：https://platform.openai.com/account/api-keys
 # chatGPT proxy代理
 openai_api_proxy="http://proxy.example"
 # 禁止使用派蒙帮忙问问的用户列表
 ban_use_userid = 12341234,45674567
+# chat请求地址，默认使用openai，如需购买另一个地址（不需要代理）的api，无恰饭，请访问 https://peiqishop.me/buy/10
+select_chat_link = "https://api.openai.com/v1/chat/completions", "https://api.chatanywhere.cn/v1/chat/completions"
+# 选择链接地址，如果为0，则是select_chat_link中第一个，依次类推
+select_chat_link_model = 0
 ```
 
 注：``.env.{ENVIRONMENT}``中的`{ENVIRONMENT}`的值取决于你的派蒙目录下的文件`.env`配置，如果文件里`ENVIRONMENT=prod`，则`.env.{ENVIRONMENT}`指的是文件`.env.prod`。

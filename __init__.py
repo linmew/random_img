@@ -3,10 +3,9 @@ import requests
 import httpx
 import asyncio
 import os
-import openai
 import re
 from bs4 import BeautifulSoup
-from datetime import date
+from datetime import date,timedelta
 from xml.etree import ElementTree
 import nonebot
 from nonebot import on_command, on_regex, logger
@@ -42,6 +41,7 @@ beautiful_img = on_command('来点随机图', aliases={'来点随机图'}, prior
 tuwei_word = on_command('来点情话', aliases={'来点情话','说点情话'}, priority=13, block=True)
 coser_img = on_command('来点coser', aliases={'来点coser', '来点cos'}, priority=13, block=True)
 paimon_knowledge = on_command('派蒙帮忙问问', aliases={'派蒙帮忙问问'}, priority=13, block=True)
+query_usage = on_command('查询GPT', aliases={'查询GPT用量','查询gpt','查询GPT'}, priority=13, block=True)
 
 # 读取.env.{ENVIRONMENT} 文件中的配置
 config = nonebot.get_driver().config
@@ -206,40 +206,57 @@ async def bing_img_handler(bot: Bot, event: MessageEvent):
         await bing_img.finish("呜呜呜，派蒙已经很努力了，但是没有找到你要的图片，可能是要找的网站不给派蒙图片，果面呐噻~下次一定一定会更努力的 (´；ω；`)")
 
 #chatgpt
-# 读取配置文件中的openai_api_key
-openai.api_key = str(getattr(config, "openai_api_key", ""))
+# 读取配置文件中
+openai_api_key_str = getattr(config, "openai_api_key", "")
+openai_api_key_list = openai_api_key_str.split(",") if openai_api_key_str else []
+proxy = str(getattr(config, "openai_api_proxy", ""))
+select_chat_link_str = getattr(config, "select_chat_link", "")
+select_chat_link = re.findall(r'https?://\S+', select_chat_link_str) if select_chat_link_str else ['https://api.openai.com/v1/chat/completions', 'https://api.chatanywhere.cn/v1/chat/completions']
+select_chat_link_model_raw = getattr(config, "select_chat_link_model", 0)
+select_chat_link_model = int(select_chat_link_model_raw) if isinstance(select_chat_link_model_raw, int) else 0
+api_url = select_chat_link[select_chat_link_model]
+api_key = openai_api_key_list[select_chat_link_model]
 # 从配置文件中获取被禁止的用户ID
 ban_use_userid_str = str(getattr(config, "ban_use_userid", "")).strip()
-
 # 根据逗号分隔字符串，并去除每个元素的前后空格
 ban_use_userid = [user_id.strip() for user_id in ban_use_userid_str.split(",")] if ban_use_userid_str else []
+if select_chat_link_model == 0:
+    timeOut = None
+else:
+    timeOut = 30
 
 # 定义一个异步函数用于获取gpt-3.5-turbo模型回答问题的答案
 async def fetch_answer(question: str) -> str:
-    # 读取配置文件中的openai_api_proxy代理
-    proxy = str(getattr(config, "openai_api_proxy", ""))
-    # 设置局部代理来使用openai的API的访问
-    if proxy:
-        openai.proxy = {
-            'http': proxy,
-            'https': proxy
-        }
-    # 使用异步方式调用openai的API，在请求 API 的时候，Bot 不会被阻塞
-    loop = asyncio.get_event_loop()
-    response = await loop.run_in_executor(None, lambda: openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            # role：角色，content：用户输入的内容
+    # 设置 authorization header
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f"Bearer {api_key}"
+    }
+    # 设置body请求体
+    data = {
+        "model": str(getattr(config, "openai_chat_model", "gpt-3.5-turbo")),
+        "messages": [
             {"role": "user", "content": f"{question}"}
         ],
         # 精度，介于0和2之间。较高的值（如0.8）会使输出更随机，而较低的值（如0.2）则会使其输出更加集中和精准
-        temperature=0.3,
+        "temperature":0.3,
         # 生成的回复的最大令牌数
-        max_tokens=2048,
-        n=1
-    ))
-    answer = response.choices[0].message["content"].strip()
-    usage_info = response.usage
+        "max_tokens":2048,
+        "n":1
+    }
+    proxies = {}
+    if proxy and select_chat_link_model == 0:
+        proxies = {
+            'http://': proxy,
+            'https://': proxy
+        }
+
+    async with httpx.AsyncClient(proxies=proxies) as client:
+        response = await client.post(f"{api_url}", json=data, headers=headers, timeout=timeOut)
+    
+    response_data = response.json()
+    answer = response_data["choices"][0]["message"]["content"].strip()
+    usage_info = response_data["usage"]
     return answer, usage_info
 
 @paimon_knowledge.handle()
@@ -268,3 +285,43 @@ async def paimon_knowledge_handler(bot: Bot, event: MessageEvent):
             await paimon_knowledge.finish(answer)
     else:
         await paimon_knowledge.finish("派蒙不知道哦！")
+
+@query_usage.handle()
+async def query_usage_handler(bot: Bot, event: MessageEvent):
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f"Bearer {api_key}"
+    }
+    # 获取当前日期
+    today = date.today()
+    # 获取当前月的第一天
+    start_date = today.replace(day=1).strftime("%Y-%m-%d")
+    # 获取下个月的第一天
+    next_month = today.replace(day=1) + timedelta(days=31)
+    end_date = next_month.replace(day=1).strftime("%Y-%m-%d")
+    url = f"https://api.openai.com/dashboard/billing/usage?start_date={start_date}&end_date={end_date}"
+
+    if select_chat_link_model != 0:
+        await query_usage.finish('请在 https://api.chatanywhere.cn/ 查看使用信息')
+    else:
+        proxies = {}
+        if proxy and select_chat_link_model == 0:
+            proxies = {
+                'http://': proxy,
+                'https://': proxy
+            }
+        async with httpx.AsyncClient(proxies=proxies) as client:
+            response = await client.get(url, headers=headers, timeout=timeOut)
+        
+        if response.status_code == 200:
+            usage_data = response.json()
+            # 在此处处理和显示使用数据
+            # 例如：
+            total_tokens = usage_data['total_usage']
+            total_usage_dollars = total_tokens / 100
+            formatted_total_usage = "${:.6f}".format(total_usage_dollars)
+            message = f"从 {start_date} 到 {end_date} 的使用情况：\n用量：{formatted_total_usage} / $5.00"
+            await query_usage.finish(message)
+        else:
+            error_message = f"派蒙查询使用情况时出错了，状态码：{response.status_code}"
+            await query_usage.finish(error_message)
