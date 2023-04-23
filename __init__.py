@@ -7,6 +7,7 @@ import re
 from bs4 import BeautifulSoup
 from datetime import date,timedelta
 from xml.etree import ElementTree
+from .openaiConfig import OpenAIConfig
 import nonebot
 from nonebot import on_command, on_regex, logger
 from nonebot.adapters.onebot.v11 import Bot, MessageEvent, MessageSegment
@@ -207,34 +208,12 @@ async def bing_img_handler(bot: Bot, event: MessageEvent):
 
 #chatgpt
 # 读取配置文件中
-openai_api_key_str = getattr(config, "openai_api_key", "")
-openai_api_key_list = openai_api_key_str.split(",") if openai_api_key_str else []
-proxy = str(getattr(config, "openai_api_proxy", ""))
-select_chat_link_str = getattr(config, "select_chat_link", "")
-select_chat_link = re.findall(r'https?://\S+', select_chat_link_str) if select_chat_link_str else ['https://api.openai.com/v1/chat/completions', 'https://api.chatanywhere.cn/v1/chat/completions']
-select_chat_link_model_raw = getattr(config, "select_chat_link_model", 0)
-select_chat_link_model = int(select_chat_link_model_raw) if isinstance(select_chat_link_model_raw, int) else 0
-api_url = select_chat_link[select_chat_link_model]
-api_key = openai_api_key_list[select_chat_link_model]
-# 从配置文件中获取被禁止的用户ID
-ban_use_userid_str = str(getattr(config, "ban_use_userid", "")).strip()
-# 根据逗号分隔字符串，并去除每个元素的前后空格
-ban_use_userid = [user_id.strip() for user_id in ban_use_userid_str.split(",")] if ban_use_userid_str else []
-if select_chat_link_model == 0:
-    timeOut = None
-else:
-    timeOut = 30
-
+openai_config = OpenAIConfig()
 # 定义一个异步函数用于获取gpt-3.5-turbo模型回答问题的答案
 async def fetch_answer(question: str) -> str:
-    # 设置 authorization header
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f"Bearer {api_key}"
-    }
     # 设置body请求体
     data = {
-        "model": str(getattr(config, "openai_chat_model", "gpt-3.5-turbo")),
+        "model": openai_config.model,
         "messages": [
             {"role": "user", "content": f"{question}"}
         ],
@@ -244,15 +223,9 @@ async def fetch_answer(question: str) -> str:
         "max_tokens":2048,
         "n":1
     }
-    proxies = {}
-    if proxy and select_chat_link_model == 0:
-        proxies = {
-            'http://': proxy,
-            'https://': proxy
-        }
 
-    async with httpx.AsyncClient(proxies=proxies) as client:
-        response = await client.post(f"{api_url}", json=data, headers=headers, timeout=timeOut)
+    async with httpx.AsyncClient(proxies=openai_config.proxies) as client:
+        response = await client.post(f"{openai_config.api_url}", json=data, headers=openai_config.headers, timeout=openai_config.timeOut)
     
     response_data = response.json()
     answer = response_data["choices"][0]["message"]["content"].strip()
@@ -268,7 +241,7 @@ async def paimon_knowledge_handler(bot: Bot, event: MessageEvent):
     # 获取用户id
     user_id = event.user_id
     # 检查用户是否在禁止列表中
-    if str(user_id) in ban_use_userid:
+    if str(user_id) in openai_config.ban_use_userid:
         await paimon_knowledge.finish("你被禁止使用派蒙帮忙问问功能。")
 
     if match:
@@ -288,10 +261,6 @@ async def paimon_knowledge_handler(bot: Bot, event: MessageEvent):
 
 @query_usage.handle()
 async def query_usage_handler(bot: Bot, event: MessageEvent):
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f"Bearer {api_key}"
-    }
     # 获取当前日期
     today = date.today()
     # 获取当前月的第一天
@@ -301,17 +270,11 @@ async def query_usage_handler(bot: Bot, event: MessageEvent):
     end_date = next_month.replace(day=1).strftime("%Y-%m-%d")
     url = f"https://api.openai.com/dashboard/billing/usage?start_date={start_date}&end_date={end_date}"
 
-    if select_chat_link_model != 0:
+    if openai_config.select_chat_link_model != 0:
         await query_usage.finish('请在 https://api.chatanywhere.cn/ 查看使用信息')
     else:
-        proxies = {}
-        if proxy and select_chat_link_model == 0:
-            proxies = {
-                'http://': proxy,
-                'https://': proxy
-            }
-        async with httpx.AsyncClient(proxies=proxies) as client:
-            response = await client.get(url, headers=headers, timeout=timeOut)
+        async with httpx.AsyncClient(proxies=openai_config.proxies) as client:
+            response = await client.get(url, headers=openai_config.headers, timeout=openai_config.timeOut)
         
         if response.status_code == 200:
             usage_data = response.json()
