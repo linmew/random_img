@@ -124,6 +124,8 @@ ban_use_userid = 12341234,45674567
 select_chat_link = "https://api.openai.com/v1/chat/completions", "https://api.chatanywhere.cn/v1/chat/completions"
 # 选择链接地址，如果为0，则是select_chat_link中第一个，依次类推
 select_chat_link_model = 0
+# 限制最大的回复字符数
+openai_max_tokens = 2048
 ```
 
 注：``.env.{ENVIRONMENT}``中的`{ENVIRONMENT}`的值取决于你的派蒙目录下的文件`.env`配置，如果文件里`ENVIRONMENT=prod`，则`.env.{ENVIRONMENT}`指的是文件`.env.prod`。

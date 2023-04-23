@@ -1,8 +1,14 @@
 import nonebot
+import re
 # 读取.env.{ENVIRONMENT} 文件中的配置
 config = nonebot.get_driver().config
 class OpenAIConfig:
     def __init__(self):
+        max_tokens_raw = getattr(config, "openai_max_tokens", None)
+        try:
+            self.max_tokens = int(max_tokens_raw)
+        except (ValueError, TypeError):
+            self.max_tokens = float('inf')
         self.openai_api_key_str = getattr(config, "openai_api_key", "")
         self.openai_api_key_list = self.openai_api_key_str.split(",") if self.openai_api_key_str else []
         self.model = str(getattr(config, "openai_chat_model", "gpt-3.5-turbo"))

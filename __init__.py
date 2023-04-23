@@ -4,6 +4,7 @@ import httpx
 import asyncio
 import os
 import re
+import math
 from bs4 import BeautifulSoup
 from datetime import date,timedelta
 from xml.etree import ElementTree
@@ -218,11 +219,12 @@ async def fetch_answer(question: str) -> str:
             {"role": "user", "content": f"{question}"}
         ],
         # 精度，介于0和2之间。较高的值（如0.8）会使输出更随机，而较低的值（如0.2）则会使其输出更加集中和精准
-        "temperature":0.3,
-        # 生成的回复的最大令牌数
-        "max_tokens":2048,
+        "temperature":0.5,
         "n":1
     }
+    # 生成的回复的最大令牌数
+    if not math.isinf(openai_config.max_tokens):
+        data["max_tokens"] = openai_config.max_tokens
 
     async with httpx.AsyncClient(proxies=openai_config.proxies) as client:
         response = await client.post(f"{openai_config.api_url}", json=data, headers=openai_config.headers, timeout=openai_config.timeOut)
@@ -271,10 +273,26 @@ async def query_usage_handler(bot: Bot, event: MessageEvent):
     # 获取下个月的第一天
     next_month = today.replace(day=1) + timedelta(days=31)
     end_date = next_month.replace(day=1).strftime("%Y-%m-%d")
-    url = f"https://api.openai.com/dashboard/billing/usage?start_date={start_date}&end_date={end_date}"
+    if openai_config.select_chat_link_model == 1:
+        url = f"https://api.chatanywhere.cn/v1/query/balance"
+    else:
+        url = f"https://api.openai.com/dashboard/billing/usage?start_date={start_date}&end_date={end_date}"
 
-    if openai_config.select_chat_link_model != 0:
-        await query_usage.finish('请在 https://api.chatanywhere.cn/ 查看使用信息')
+    if openai_config.select_chat_link_model == 1:
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f"{openai_config.api_key}"
+        }
+        async with httpx.AsyncClient(proxies=openai_config.proxies) as client:
+            response = await client.post(url, headers=headers, timeout=openai_config.timeOut)
+        if response.status_code == 200:
+            usage_data = response.json()
+            # 在此处处理和显示使用数据
+            message = f"chatanywhere的API的使用情况：\n用量：${usage_data['balanceUsed']} / ${usage_data['balanceTotal']}"
+            await query_usage.finish(message)
+        else:
+            error_message = f"派蒙在查询使用情况时出错了，状态码：{response.status_code}"
+            await query_usage.finish(error_message)
     else:
         async with httpx.AsyncClient(proxies=openai_config.proxies) as client:
             response = await client.get(url, headers=openai_config.headers, timeout=openai_config.timeOut)
@@ -282,12 +300,11 @@ async def query_usage_handler(bot: Bot, event: MessageEvent):
         if response.status_code == 200:
             usage_data = response.json()
             # 在此处处理和显示使用数据
-            # 例如：
             total_tokens = usage_data['total_usage']
             total_usage_dollars = total_tokens / 100
             formatted_total_usage = "${:.6f}".format(total_usage_dollars)
-            message = f"从 {start_date} 到 {end_date} 的使用情况：\n用量：{formatted_total_usage} / $5.00"
+            message = f"openai的API的使用情况：\n用量：{formatted_total_usage} / $5.00"
             await query_usage.finish(message)
         else:
-            error_message = f"派蒙查询使用情况时出错了，状态码：{response.status_code}"
+            error_message = f"派蒙在查询使用情况时出错了，状态码：{response.status_code}"
             await query_usage.finish(error_message)
