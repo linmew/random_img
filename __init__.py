@@ -219,8 +219,7 @@ async def fetch_answer(question: str) -> str:
             {"role": "user", "content": f"{question}"}
         ],
         # 精度，介于0和2之间。较高的值（如0.8）会使输出更随机，而较低的值（如0.2）则会使其输出更加集中和精准
-        "temperature":0.5,
-        "n":1
+        "temperature":0.7
     }
     # 生成的回复的最大令牌数
     if not math.isinf(openai_config.max_tokens):
