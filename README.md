@@ -126,6 +126,8 @@ select_chat_link = "https://api.openai.com/v1/chat/completions", "https://api.ch
 select_chat_link_model = 0
 # 限制最大的回复字符数
 openai_max_tokens = 2048
+# 使用模型
+openai_chat_model = "gpt-3.5-turbo"
 ```
 
 注：``.env.{ENVIRONMENT}``中的`{ENVIRONMENT}`的值取决于你的派蒙目录下的文件`.env`配置，如果文件里`ENVIRONMENT=prod`，则`.env.{ENVIRONMENT}`指的是文件`.env.prod`。
