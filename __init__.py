@@ -10,10 +10,11 @@ from datetime import date,timedelta
 from xml.etree import ElementTree
 from .openaiConfig import OpenAIConfig
 import nonebot
-from nonebot import on_command, on_regex, logger
+from nonebot import on_command, on_regex, logger, get_bot
 from nonebot.adapters.onebot.v11 import Bot, MessageEvent, MessageSegment
 from nonebot.params import RegexGroup
 from nonebot.plugin import PluginMetadata
+from nonebot.permission import SUPERUSER
 from .utils.decorator import auto_withdraw
 from .utils.config import get_message_id
 __plugin_meta__ = PluginMetadata(
@@ -43,7 +44,7 @@ beautiful_img = on_command('来点随机图', aliases={'来点随机图'}, prior
 tuwei_word = on_command('来点情话', aliases={'来点情话','说点情话'}, priority=13, block=True)
 coser_img = on_command('来点coser', aliases={'来点coser', '来点cos'}, priority=13, block=True)
 paimon_knowledge = on_command('派蒙帮忙问问', aliases={'派蒙帮忙问问'}, priority=13, block=True)
-query_usage = on_command('查询GPT', aliases={'查询GPT用量','查询gpt','查询GPT'}, priority=13, block=True)
+query_usage = on_command('查询GPT', aliases={'查询GPT用量','查询gpt','查询GPT'}, priority=13, permission=SUPERUSER, block=True)
 
 # 读取.env.{ENVIRONMENT} 文件中的配置
 config = nonebot.get_driver().config
@@ -96,6 +97,13 @@ request_lock = asyncio.Lock()
 @coser_img.handle()
 @auto_withdraw(30)
 async def coser_img_handler(event: MessageEvent):
+    global user_requests
+    user_id = event.user_id
+    today = date.today()
+    # 检查用户是否已经请求过，如果没有或者请求不是今天的，则初始化计数
+    if user_id not in user_requests or user_requests[user_id]['date'] != today:
+        user_requests[user_id] = {'date': today, 'cos-count': 0}
+    # 如果用户今天的请求次数已经达到限制，不再处理请求
     if request_lock.locked():
         await coser_img.finish("派蒙还在处理 (｡•́︿•̀｡)，不要心急哦~")
         return
@@ -119,13 +127,14 @@ async def coser_img_handler(event: MessageEvent):
                 # 提取图片 URL
                 img_tag = soup.find('img')
                 image_url = img_tag['src']
+                user_requests[user_id]['cos-count'] += 1
             else:
                 await coser_img.finish("呜呜呜，派蒙已经很努力了，但是没有找到你要的图片，可能是要找的网站不给派蒙图片，果面呐噻~下次一定一定会更努力的 (´；ω；`)")
         else:
             image_url = selected_url
         
         # 发送图片给用户
-        await coser_img.finish(MessageSegment.image(file=image_url))
+        await coser_img.finish(f"你今天浏览了{user_requests[user_id]['cos-count']}次cos图"+ MessageSegment.image(file=image_url), at_sender=True)
 #随机图
 @beautiful_img.handle()
 @auto_withdraw(30)
@@ -147,13 +156,14 @@ tuwei_word_daily_limit = int(getattr(config, "tuwei_word_daily_limit", 10))
 async def tuwei_word_handler(event: MessageEvent):
     global user_requests
     user_id = event.user_id
+    message_type = event.message_type
     today = date.today()
     # 检查用户是否已经请求过，如果没有或者请求不是今天的，则初始化计数
     if user_id not in user_requests or user_requests[user_id]['date'] != today:
         user_requests[user_id] = {'date': today, 'count': 0}
     # 如果用户今天的请求次数已经达到限制，不再处理请求
     if user_requests[user_id]['count'] >= tuwei_word_daily_limit:
-        print(f"用户 {user_id} 今日已经收到了 {tuwei_word_daily_limit} 次情话.")
+        logger.info(f"用户 {user_id} 今日已经收到了 {tuwei_word_daily_limit} 次情话.")
         return
     # 定义情话API的URL列表
     urls = [
@@ -170,8 +180,12 @@ async def tuwei_word_handler(event: MessageEvent):
         user_requests[user_id]['count'] += 1
         # 添加换行符
         text = response.text + "\n\n"
-        text += f"--你今天已经收到了派蒙 {user_requests[user_id]['count']} / {tuwei_word_daily_limit}次情话咯~"  # 显示今天已请求的次数
-        await tuwei_word.finish(text)
+        text += f"--你今天已经收到了派蒙 {user_requests[user_id]['count']} / {tuwei_word_daily_limit}次情话咯~"
+        if message_type == 'group':
+            await tuwei_word.finish(text, at_sender=True)
+        else:
+            await tuwei_word.finish(text)
+        #await tuwei_word.finish(text)
     else:
         await tuwei_word.finish("呜呜，派蒙还没想到，不过，派蒙会一直陪着你的~")
 # 必应每日壁纸
@@ -257,7 +271,7 @@ async def paimon_knowledge_handler(bot: Bot, event: MessageEvent):
                 # 记录usage信息
                 logger.info(f"ChatGpt使用信息 问题字符: {usage_info['prompt_tokens']} 回答字符: {usage_info['completion_tokens']} 总消耗: {usage_info['total_tokens']}")
 
-                await paimon_knowledge.finish(answer)
+                await paimon_knowledge.finish(answer, at_sender=True)
             except httpx.ReadTimeout:
                 await paimon_knowledge.finish("肯定是你这个问题难倒到它啦，超时了，请稍后再问问。")
     else:
