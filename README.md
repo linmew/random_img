@@ -136,7 +136,7 @@ ban_use_userid = 12341234,45674567
 
 | 属性 | 属性值 | 说明 |
 |:-----:|:-----|:-----|
-| name | "openai"、"chatanywhere" |除了这两个配置，你可以使用其他第三方的API，请查看提供方的API使用文档，按照openai_api_attributes数组格式添加。但是第三方的key用量查询部分的代码需要你自己调整下。**请注意配置项select_chat_link_model的值要和name属性值对应。**|
+| name | "openai"、"chatanywhere" |除了这两个配置，你可以使用其他第三方的API，请查看提供方的API使用文档，按照openai_api_attributes数组格式添加。但是第三方的key用量查询部分的代码需要自行调整。**请注意配置项select_chat_link_model的值要和name属性值对应。**|
 | key | "sk-xxx" |填入API的key，openai的API Key地址：[API keys - OpenAI API](https://platform.openai.com/account/api-keys)。第三方的请自行查询。|
 | url | "https://api.openai.com/v1"、"https://api.chatanywhere.cn/v1" |api的请求地址，代码里openai库会自行拼接url后面的请求参数，第三方的请自行询问请求地址，以及是否需要代理访问。|
 | mode | gpt-4、gpt-4-0314、gpt-4-32k、gpt-4-32k-0314、gpt-3.5-turbo、gpt-3.5-turbo-0301 |选择使用的模型，由于用的是chat功能，所以属性值是gpt-4, gpt-4-0314, gpt-4-32k, gpt-4-32k-0314, gpt-3.5-turbo, gpt-3.5-turbo-0301这些可选的，具体的请访问[Models - OpenAI API](https://platform.openai.com/docs/models/model-endpoint-compatibility)|
@@ -144,16 +144,22 @@ ban_use_userid = 12341234,45674567
 2.如何快速区分 GPT-3.5 还是 GPT-4，可以通过三个经典问题验证：
 
 > 测试问题 1：What is tomorrow in relation to yesterday’s today？（昨天的当天是明天的什么？）
+>
 > GPT-3.5 回复：Yesterday（昨天）
+>
 > GPT-4 回复：Past（前天）
 
 > 测试问题 2：There are 9 birds in the tree, the hunter shoots one, how many birds are left in the tree？（树上 9 只鸟，打掉 1 只，还剩几只？）
+>
 > GPT-3.5 回复：8 只
+>
 > GPT-4 回复：0 只，其他被吓跑了
 
->测试问题 3：鲁迅和周树人是什么关系？
->GPT-3.5 回复：稀奇古怪的乱编理由
->GPT-4 回复：鲁迅和周树人是同一个人
+> 测试问题 3：鲁迅和周树人是什么关系？
+>
+> GPT-3.5 回复：稀奇古怪的乱编理由
+>
+> GPT-4 回复：鲁迅和周树人是同一个人
 
 ## 丨💸鸣谢
 
