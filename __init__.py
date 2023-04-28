@@ -5,6 +5,7 @@ import asyncio
 import os
 import re
 import math
+import openai
 from bs4 import BeautifulSoup
 from datetime import date,timedelta
 from xml.etree import ElementTree
@@ -224,27 +225,24 @@ async def bing_img_handler(bot: Bot, event: MessageEvent):
 #chatgpt
 # 读取配置文件中
 openai_config = OpenAIConfig()
-# 定义一个异步函数用于获取gpt-3.5-turbo模型回答问题的答案
+# 定义一个异步函数用于获取gpt模型回答问题的答案
 async def fetch_answer(question: str) -> str:
-    # 设置body请求体
-    data = {
-        "model": openai_config.model,
-        "messages": [
+    # 代理
+    openai.proxy = openai_config.proxies
+    openai.api_base = openai_config.api_url
+    openai.api_key = openai_config.api_key
+    # 使用异步方式调用openai的API，在请求 API 的时候，Bot 不会被阻塞
+    loop = asyncio.get_event_loop()
+    response = await loop.run_in_executor(None, lambda: openai.ChatCompletion.create(
+        model = openai_config.model,
+        messages = [
+            # role：角色，content：用户输入的内容
             {"role": "user", "content": f"{question}"}
         ],
-        # 精度，介于0和2之间。较高的值（如0.8）会使输出更随机，而较低的值（如0.2）则会使其输出更加集中和精准
-        "temperature":0.7
-    }
-    # 生成的回复的最大令牌数
-    if not math.isinf(openai_config.max_tokens):
-        data["max_tokens"] = openai_config.max_tokens
-
-    async with httpx.AsyncClient(proxies=openai_config.proxies) as client:
-        response = await client.post(f"{openai_config.api_url}", json=data, headers=openai_config.headers, timeout=openai_config.timeOut)
-    
-    response_data = response.json()
-    answer = response_data["choices"][0]["message"]["content"].strip()
-    usage_info = response_data["usage"]
+        temperature=0.7
+    ))
+    answer = response.choices[0].message["content"].strip()
+    usage_info = response.usage
     return answer, usage_info
 
 @paimon_knowledge.handle()
@@ -286,38 +284,40 @@ async def query_usage_handler(bot: Bot, event: MessageEvent):
     # 获取下个月的第一天
     next_month = today.replace(day=1) + timedelta(days=31)
     end_date = next_month.replace(day=1).strftime("%Y-%m-%d")
-    if openai_config.select_chat_link_model == 1:
+    if openai_config.select_chat_link_model == "chatanywhere":
         url = f"https://api.chatanywhere.cn/v1/query/balance"
     else:
         url = f"https://api.openai.com/dashboard/billing/usage?start_date={start_date}&end_date={end_date}"
 
-    if openai_config.select_chat_link_model == 1:
-        headers = {
-            'Content-Type': 'application/json',
-            'Authorization': f"{openai_config.api_key}"
-        }
-        async with httpx.AsyncClient(proxies=openai_config.proxies) as client:
-            response = await client.post(url, headers=headers, timeout=openai_config.timeOut)
-        if response.status_code == 200:
-            usage_data = response.json()
-            # 在此处处理和显示使用数据
-            message = f"chatanywhere的API的使用情况：\n用量：${usage_data['balanceUsed']} / ${usage_data['balanceTotal']}"
-            await query_usage.finish(message)
-        else:
-            error_message = f"派蒙在查询使用情况时出错了，状态码：{response.status_code}"
-            await query_usage.finish(error_message)
-    else:
-        async with httpx.AsyncClient(proxies=openai_config.proxies) as client:
-            response = await client.get(url, headers=openai_config.headers, timeout=openai_config.timeOut)
-        
-        if response.status_code == 200:
-            usage_data = response.json()
-            # 在此处处理和显示使用数据
-            total_tokens = usage_data['total_usage']
-            total_usage_dollars = total_tokens / 100
-            formatted_total_usage = "${:.6f}".format(total_usage_dollars)
-            message = f"openai的API的使用情况：\n用量：{formatted_total_usage} / $5.00"
-            await query_usage.finish(message)
-        else:
-            error_message = f"派蒙在查询使用情况时出错了，状态码：{response.status_code}"
-            await query_usage.finish(error_message)
+    try:
+        if openai_config.select_chat_link_model == "chatanywhere":
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': f"{openai_config.api_key}"
+            }
+            async with httpx.AsyncClient(proxies=openai_config.proxies) as client:
+                response = await client.post(url, headers=headers)
+            if response.status_code == 200:
+                usage_data = response.json()
+                # 在此处处理和显示使用数据
+                message = f"chatanywhere的API的使用情况：\n用量：${usage_data['balanceUsed']} / ${usage_data['balanceTotal']}"
+                await query_usage.finish(message)
+        elif openai_config.select_chat_link_model == "openai":
+            proxies = {
+                'http://': openai_config.proxy,
+                'https://': openai_config.proxy
+            }
+            async with httpx.AsyncClient(proxies=proxies) as client:
+                response = await client.get(url, headers=openai_config.headers)
+            
+            if response.status_code == 200:
+                usage_data = response.json()
+                # 在此处处理和显示使用数据
+                total_tokens = usage_data['total_usage']
+                total_usage_dollars = total_tokens / 100
+                formatted_total_usage = "${:.6f}".format(total_usage_dollars)
+                message = f"openai的API的使用情况：\n用量：{formatted_total_usage} / $5.00"
+                await query_usage.finish(message)
+    except httpx.ConnectTimeout:
+        error_message = "派蒙在查询使用情况时出错了，连接超时。请稍后重试。"
+        await query_usage.finish(error_message)
