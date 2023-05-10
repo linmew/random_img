@@ -36,7 +36,7 @@ __plugin_meta__ = PluginMetadata(
 ecy_img = on_regex(r'^来点(二次元|二刺螈|银发|兽耳|星空|竖屏|横屏|富婆|萝莉|涩图|涩涩|色色|来点|福瑞)图?$', priority=13, block=True)
 ecy_img.__paimon_help__ = {
     "usage":     "来点<类型>图",
-    "introduce": "懂得都懂，类型有原神|二次元|二刺螈|银发|兽耳|星空|竖屏|横屏",
+    "introduce": "输出各种类型图片",
     "priority": 13
 }
 ys_img = on_command('原神壁纸', aliases={'来点原神图', '来点原神壁纸'}, priority=13, block=True)
@@ -46,6 +46,7 @@ tuwei_word = on_command('来点情话', aliases={'来点情话','说点情话'},
 coser_img = on_command('来点coser', aliases={'来点coser', '来点cos'}, priority=13, block=True)
 paimon_knowledge = on_command('派蒙帮忙问问', aliases={'派蒙帮忙问问'}, priority=13, block=True)
 query_usage = on_command('查询GPT', aliases={'查询GPT用量','查询gpt','查询GPT'}, priority=13, permission=SUPERUSER, block=True)
+cat_img = on_command('来点猫猫', priority=13, block=True)
 
 # 读取.env.{ENVIRONMENT} 文件中的配置
 config = nonebot.get_driver().config
@@ -321,3 +322,30 @@ async def query_usage_handler(bot: Bot, event: MessageEvent):
     except httpx.ConnectTimeout:
         error_message = "派蒙在查询使用情况时出错了，连接超时。请稍后重试。"
         await query_usage.finish(error_message)
+# 猫猫图片
+# 为猫猫图片创建一个单独的锁
+cat_img_lock = asyncio.Lock()
+@cat_img.handle()
+async def cat_img_handler(event: MessageEvent):
+    # 如果上次请求还未完成，就不再进行下一次请求
+    if cat_img_lock.locked():
+        await cat_img.finish("派蒙还在处理 (｡•́︿•̀｡)，不要心急哦~")
+        return
+
+    async with cat_img_lock:
+        selected_url = 'https://api.thecatapi.com/v1/images/search?size=full'
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(selected_url)
+
+        if response.status_code == 200:
+            # 解析响应的 JSON
+            cat_data = response.json()
+
+            # 提取图片 URL
+            image_url = cat_data[0]['url']
+        else:
+            await cat_img.finish("呜呜呜，派蒙已经很努力了，但是没有找到你要的图片，可能是要找的网站不给派蒙图片，果面呐噻~下次一定一定会更努力的 (´；ω；`)")
+
+        # 发送图片给用户
+        await cat_img.finish(MessageSegment.image(file=image_url), at_sender=True)
